@@ -5,11 +5,11 @@ import db from "../database";
 
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
-
-    const query = `SELECT * FROM usuario WHERE email = $1 AND senha = $2`;
+// SQL injection
+    const query = "SELECT * FROM usuario WHERE email = $1 AND senha = $2";
 
     console.log(`Query Executada: ${query}`);
-
+// SQL injection
     const result = await db.query(query, [email, password]);
 
     if (result.rowCount && result.rowCount > 0) {
@@ -32,11 +32,11 @@ export const novoLogin = async (req: Request, res: Response) => {
     const { email, password, nome } = req.body;
 
     const queryNomeIpuExiste =
-        `SELECT * FROM iptu WHERE nome = '${nome}'`;
+        "SELECT * FROM iptu WHERE nome = $1";
 
     console.log(`Query Executada: ${queryNomeIpuExiste}`);
 
-    const iptuResult = await db.query(queryNomeIpuExiste);
+    const iptuResult = await db.query(query,[nome]);
 
     if (iptuResult.rowCount && iptuResult.rowCount > 0) {
 
@@ -49,12 +49,12 @@ export const novoLogin = async (req: Request, res: Response) => {
         const result = await db.query(query);
 
         const queryIdUsuario =
-            `SELECT id FROM usuario
-             WHERE email = '${email}' AND senha = '${password}'`;
+            "SELECT id FROM usuario
+             WHERE email = $1 AND senha = $2";
 
         console.log(`Query Executada: ${queryIdUsuario}`);
 
-        const resultIdUsuario = await db.query(queryIdUsuario);
+        const resultIdUsuario = await db.query(query,[email, senha]);
 
         const queryUpdateTabelaIptu =
             `UPDATE iptu
@@ -132,13 +132,13 @@ export const getIptuPorIdUsuario = async (
         usuarioId,
     } = req.body;
     const query =
-        `SELECT * FROM iptu WHERE usuario_id = '${usuarioId}'`;
+        "SELECT * FROM iptu WHERE usuario_id = $1";
 
     console.log(`Query Executada: ${query}`);
 
     try {
 
-        const result = await db.query(query);
+        const result = await db.query(query,[usuario_id]);
 
         console.log(`Retorno: ${JSON.stringify(result.rows)}`);
 

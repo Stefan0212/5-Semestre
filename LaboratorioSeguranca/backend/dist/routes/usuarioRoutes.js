@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const usuarioController_1 = require("../controllers/usuarioController");
+const router = (0, express_1.Router)();
+router.post("/login", usuarioController_1.login);
+router.post("/novo-login", usuarioController_1.novoLogin);
+router.post("/atualizar-iptu", usuarioController_1.atualizarIptu);
+router.get("/iptu-por-usuario", usuarioController_1.getIptuPorIdUsuario);
+router.get("/codigo-qr-ou-barra", usuarioController_1.getQRCodeOrCodBarras);
+router.get("/iptus", usuarioController_1.getIptus);
+exports.default = router;

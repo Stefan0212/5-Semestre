@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getQRCodeOrCodBarras = exports.getIptus = exports.getIptuPorIdUsuario = exports.atualizarIptu = exports.novoLogin = exports.login = void 0;
+exports.payloadUsuario = exports.getQRCodeOrCodBarras = exports.getIptus = exports.getIptuPorIdUsuario = exports.atualizarIptu = exports.novoLogin = exports.login = void 0;
 const database_1 = __importDefault(require("../database"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const login = async (req, res) => {
@@ -12,15 +12,20 @@ const login = async (req, res) => {
     console.log(`Query Executada: ${query}`);
     const result = await database_1.default.query(query, [email, password]);
     if (result.rowCount && result.rowCount > 0) {
+        const token = jsonwebtoken_1.default.sign({
+            id: result.rows[0].id,
+            tipo: result.rows[0].tipo_usuario_id,
+            email: result.rows[0].email,
+            nome: result.rows[0].nome
+        }, global.segredoJwt, { expiresIn: "2h" });
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            // secure: true // Em produção (HTTPS) habilitar esta opção
+        });
         res.json({
             success: true,
-            user: result.rows[0],
-            token: jsonwebtoken_1.default.sign({
-                id: result.rows[0].id,
-                tipo: result.rows[0].tipo_usuario_id,
-                email: result.rows[0].email,
-                nome: result.rows[0].nome
-            }, global.segredoJwt, { expiresIn: "2h" })
+            user: result.rows[0]
         });
     }
     else {
@@ -41,6 +46,9 @@ const novoLogin = async (req, res) => {
              VALUES ($1, $2, $3, 3)`;
         console.log(`Query Executada: ${query}`);
         const result = await database_1.default.query(query, [email, password, nome]);
+        // SQL Injection
+        //Acontece quando o hacker executa SQL em campos de entrada, 
+        //Afim de que o sistema execute query SQL no banco de dados - como consultas, alteraçãoes e até delete.
         const queryIdUsuario = `SELECT id FROM usuario
              WHERE email = $1 AND senha = $2`;
         console.log(`Query Executada: ${queryIdUsuario}`);
@@ -54,15 +62,22 @@ const novoLogin = async (req, res) => {
             result.rowCount > 0 &&
             resultUpdate.rowCount &&
             resultUpdate.rowCount > 0) {
+            const token = jsonwebtoken_1.default.sign({
+                id: result.rows[0].id,
+                tipo: result.rows[0].tipo_usuario_id,
+                email: result.rows[0].email,
+                nome: result.rows[0].nome
+            }, global.segredoJwt, { expiresIn: "2h" });
+            //HTTP Only, SameSite strict, Essa opção impede que o hacker use javascript para acessar os nossos cookies.
+            //Com o secure true, impedimos que cookie sejam enviados via HTTP.
+            res.cookie('token', token, {
+                httpOnly: true,
+                sameSite: 'strict',
+                secure: true
+            });
             res.json({
                 success: true,
-                user: result.rows[0],
-                token: jsonwebtoken_1.default.sign({
-                    id: result.rows[0].id,
-                    tipo: result.rows[0].tipo_usuario_id,
-                    email: result.rows[0].email,
-                    nome: result.rows[0].nome
-                }, global.segredoJwt, { expiresIn: "2h" })
+                user: result.rows[0]
             });
         }
         else {
@@ -100,7 +115,10 @@ const atualizarIptu = async (req, res) => {
 };
 exports.atualizarIptu = atualizarIptu;
 const getIptuPorIdUsuario = async (req, res) => {
-    const { usuarioId, } = req.body;
+    const usuarioId = req.body?.usuarioId ||
+        req.query?.usuarioId ||
+        req.user?.id ||
+        res.locals.payload?.id;
     const query = `SELECT * FROM iptu WHERE usuario_id = $1`;
     console.log(`Query Executada: ${query}`);
     try {
@@ -150,3 +168,12 @@ const getQRCodeOrCodBarras = async (req, res) => {
     });
 };
 exports.getQRCodeOrCodBarras = getQRCodeOrCodBarras;
+const payloadUsuario = async (req, res) => {
+    return res.json({
+        success: true,
+        message: "Payload do usuário obtido com sucesso",
+        payload: res.locals.payload || req.user,
+        cryptoToken: res.locals.csrfToken
+    });
+};
+exports.payloadUsuario = payloadUsuario;

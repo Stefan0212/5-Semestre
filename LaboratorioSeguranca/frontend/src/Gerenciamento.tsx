@@ -23,21 +23,21 @@ function Gerenciamento() {
 
       try {
 
-        const usuarioStorage = localStorage.getItem("user");
-
-        if (!usuarioStorage) {
-          console.error("Usuário não encontrado no localStorage");
-          return;
+        try {
+          const payloadRes = await axios.get(
+            "/usuario/payload-usuario",
+            { withCredentials: true }
+          );
+          if (payloadRes.data.success) {
+            axios.defaults.headers.common["X-CSRF-Token"] = payloadRes.data.cryptoToken;
+            setUser(payloadRes.data.payload);
+          }
+        } catch {
+          const usuarioStorage = localStorage.getItem("user");
+          if (usuarioStorage) {
+            setUser(JSON.parse(usuarioStorage));
+          }
         }
-
-        const usuario = JSON.parse(usuarioStorage);
-
-        console.log(
-          "Usuário recuperado do storage:",
-          usuario
-        );
-
-        setUser(usuario);
 
         const response = await axios.get<{
           iptu: Iptuu[]

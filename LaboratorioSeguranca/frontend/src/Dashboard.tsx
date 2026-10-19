@@ -23,6 +23,7 @@ function Dashboard() {
   const [novoComentario, setNovoComentario] = useState("");
   const [tipoCodigo, setTipoCodigo] = useState("codigoDeBarras");
   const [codigoRetorno, setCodigoRetorno] = useState<{tipo?: string, url?: string}>({});
+  const [tokenCsrf, setTokenCsrf] = useState("");
 
 
   const handleGerenciamento = async (e: React.FormEvent) => {
@@ -42,28 +43,32 @@ function Dashboard() {
 
       try {
 
-        const usuarioStorage = localStorage.getItem("user");
+        const response = await axios.get(
+          "/usuario/payload-usuario",
+          {
+            withCredentials: true
+          }
+        );
 
-        if (!usuarioStorage) {
+        if (!response.data.success) {
           console.error("Usuário não encontrado no localStorage");
           return;
         }
 
-        const usuario = JSON.parse(usuarioStorage);
+        setUser(response.data.payload);
+        setTokenCsrf(response.data.cryptoToken);
+        axios.defaults.headers.common["X-CSRF-Token"] = response.data.cryptoToken;
 
-        console.log("Usuário recuperado do storage:", usuario);
-
-        setUser(usuario);
-
-
-        const response = await axios.post<{ iptu: Iptuu[] }>(
-          "usuario/iptu-por-usuario",
+        const responseIptu = await axios.get<{ iptu: Iptuu[] }>(
+          "/usuario/iptu-por-usuario",
           {
-            usuarioId: usuario.id
+            withCredentials: true
           }
         );
 
-        setIptu(response.data.iptu[0]);
+        if (responseIptu.data.iptu && responseIptu.data.iptu.length > 0) {
+          setIptu(responseIptu.data.iptu[0]);
+        }
 
       } catch (error) {
 
@@ -106,21 +111,16 @@ function Dashboard() {
 
     try {
 
-      const usuarioStorage = localStorage.getItem("user");
-
-      if (!usuarioStorage) {
-        console.error("Usuário não encontrado");
-        return;
-      }
-
-      const usuario = JSON.parse(usuarioStorage);
-
-
       await axios.post(
         "/comentario",
         {
           texto: novoComentario,
-          usuarioId: usuario.id
+          usuarioId: user?.id
+        },
+        {
+          headers: {
+            "X-CSRF-Token": tokenCsrf
+          }
         }
       );
 

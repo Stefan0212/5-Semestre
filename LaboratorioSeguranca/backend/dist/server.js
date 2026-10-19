@@ -9,14 +9,17 @@ const comentarioRoutes_1 = __importDefault(require("./routes/comentarioRoutes"))
 const hackerMalvadaoRoutes_1 = __importDefault(require("./routes/hackerMalvadaoRoutes"));
 const jwtServices_1 = __importDefault(require("./Services/jwtServices"));
 const cors_1 = __importDefault(require("cors"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app = (0, express_1.default)();
 global.segredoJwt = "super_secret_key_123";
 app.use((0, cors_1.default)({
     origin: "http://localhost:5173", // Restringir a origem para o frontend
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+    credentials: true
 }));
 app.use(express_1.default.json());
+app.use((0, cookie_parser_1.default)());
 // app.use(express.urlencoded({ extended: true }));
 // Proteção CSRF baseada em cabeçalhos (Origin/Referer)
 app.use((req, res, next) => {
@@ -35,8 +38,7 @@ app.use((req, res, next) => {
     if (req.path === '/usuario/login' || req.path === '/usuario/novo-login') {
         return next();
     }
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token;
     if (!token) {
         res.status(401).json({ success: false, message: 'Token não fornecido' });
         return;
@@ -47,6 +49,7 @@ app.use((req, res, next) => {
         return;
     }
     req.user = valid;
+    res.locals.payload = valid;
     next();
 });
 app.use("/usuario", usuarioRoutes_1.default);

@@ -168,9 +168,11 @@ export const getIptuPorIdUsuario = async (
     res: Response
 ) => {
 
-    const {
-        usuarioId,
-    } = req.body;
+    const usuarioId =
+        req.body?.usuarioId ||
+        req.query?.usuarioId ||
+        (req as any).user?.id ||
+        res.locals.payload?.id;
     const query =
         `SELECT * FROM iptu WHERE usuario_id = $1`;
 
@@ -248,4 +250,14 @@ export const getQRCodeOrCodBarras = async (
         url: codigoUrl
     });
 };
+
+export const payloadUsuario = async (req: Request, res: Response) => {
+    return res.json({
+        success: true,
+        message: "Payload do usuário obtido com sucesso",
+        payload: res.locals.payload || (req as any).user,
+        cryptoToken: res.locals.csrfToken
+    });
+};
+
 

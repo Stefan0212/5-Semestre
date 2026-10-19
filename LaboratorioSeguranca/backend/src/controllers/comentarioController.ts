@@ -13,6 +13,8 @@ export const criarComentario = async (
         usuarioId
     } = req.body;
 
+    const idUsuario = usuarioId || (req as any).user?.id || res.locals.payload?.id;
+
     //XSS STORED, salvando texto limpo no banco de dados.
     const xss = require("xss");
     const textoLimpo = xss(texto);
@@ -24,7 +26,7 @@ export const criarComentario = async (
 
     try {
 
-        await db.query(query, [textoLimpo, usuarioId]);
+        await db.query(query, [textoLimpo, idUsuario]);
 
         res.status(201).json({
             message: "Comentário criado"

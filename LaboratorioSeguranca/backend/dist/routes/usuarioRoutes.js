@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const usuarioController_1 = require("../controllers/usuarioController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const csrfTokenMiddleware_1 = require("../middleware/csrfTokenMiddleware");
+const csrfGerarTokenMiddleware_1 = require("../middleware/csrfGerarTokenMiddleware");
+const router = (0, express_1.Router)();
+router.post("/login", csrfGerarTokenMiddleware_1.csrfGerarTokenMiddleware, usuarioController_1.login);
+router.post("/novo-login", csrfGerarTokenMiddleware_1.csrfGerarTokenMiddleware, usuarioController_1.novoLogin);
+router.post("/atualizar-iptu", csrfTokenMiddleware_1.csrfTokenMiddleware, (0, authMiddleware_1.authMiddleware)([1, 2]), usuarioController_1.atualizarIptu);
+router.put("/atualizar-iptu", csrfTokenMiddleware_1.csrfTokenMiddleware, (0, authMiddleware_1.authMiddleware)([1, 2]), usuarioController_1.atualizarIptu);
+router.get("/iptu-por-usuario", csrfTokenMiddleware_1.csrfTokenMiddleware, (0, authMiddleware_1.authMiddleware)([1, 2]), usuarioController_1.getIptuPorIdUsuario);
+router.post("/iptu-por-usuario", csrfTokenMiddleware_1.csrfTokenMiddleware, (0, authMiddleware_1.authMiddleware)([1, 2]), usuarioController_1.getIptuPorIdUsuario);
+router.get("/payload-usuario", authMiddleware_1.authMiddleware, csrfGerarTokenMiddleware_1.csrfGerarTokenMiddleware, usuarioController_1.payloadUsuario);
+router.get("/codigo-qr-ou-barra", csrfTokenMiddleware_1.csrfTokenMiddleware, authMiddleware_1.authMiddleware, usuarioController_1.getQRCodeOrCodBarras);
+router.get("/iptus", csrfTokenMiddleware_1.csrfTokenMiddleware, (0, authMiddleware_1.authMiddleware)([1, 2]), usuarioController_1.getIptus);
+exports.default = router;

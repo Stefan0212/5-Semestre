@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const comentarioController_1 = require("../controllers/comentarioController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const csrfTokenMiddleware_1 = require("../middleware/csrfTokenMiddleware");
+const router = (0, express_1.Router)();
+router.post("/", authMiddleware_1.authMiddleware, csrfTokenMiddleware_1.csrfTokenMiddleware, comentarioController_1.criarComentario);
+router.get("/", authMiddleware_1.authMiddleware, comentarioController_1.listarComentarios);
+exports.default = router;
